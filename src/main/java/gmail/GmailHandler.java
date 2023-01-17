@@ -14,10 +14,10 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.Message;
-import org.testng.Assert;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.security.GeneralSecurityException;
 import java.util.*;
 
@@ -28,28 +28,17 @@ public class GmailHandler {
     private final String BANK_EMAIL_TITLE = "Your Requested Online Banking Identification Code";
     private final String CODE_KEY = "Code is: ";
     private final int CODE_LENGTH = 8;
-    private final String APPLICATION_NAME = "TellusAutoTests";
+    private final String APPLICATION_NAME = "Gmail handler";
     private final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-    private String TOKENS_DIRECTORY_PATH;
-    /**
-     * If modifying these scopes, delete your previously saved tokens/ folder.
-     */
+    private String pathTokenDirectory;
+    private String pathCredentialsFile;
+    private Gmail gmailService;
     private List<String> SCOPES = Arrays.asList(GmailScopes.MAIL_GOOGLE_COM);
-    private String CREDENTIALS_FILE_PATH;
 
-    public GmailHandler() {
-
-        TOKENS_DIRECTORY_PATH = System.getProperty("user.dir") +
-                File.separator + "src" +
-                File.separator + "test" +
-                File.separator + "resources" +
-                File.separator + "gmail_credential";
-        CREDENTIALS_FILE_PATH = System.getProperty("user.dir") +
-                File.separator + "src" +
-                File.separator + "test" +
-                File.separator + "resources" +
-                File.separator + "gmail_credential" +
-                File.separator + "gmail_credentials.json";
+    public GmailHandler(String pathTokenDirectory, String pathCredentialsFile) throws GeneralSecurityException, IOException {
+        this.pathTokenDirectory = pathTokenDirectory;
+        this.pathCredentialsFile = pathCredentialsFile;
+        this.gmailService = startService();
     }
 
     /**
@@ -62,16 +51,16 @@ public class GmailHandler {
      */
     private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
 
-        InputStream in = new FileInputStream(new File(CREDENTIALS_FILE_PATH));
+        InputStream in = Files.newInputStream(new File(this.pathCredentialsFile).toPath());
         if (in == null) {
-            throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
+            throw new FileNotFoundException("Resource not found: " + this.pathCredentialsFile);
         }
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
         // Build flow and trigger user authorization request.
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                 HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new File(TOKENS_DIRECTORY_PATH)))
+                .setDataStoreFactory(new FileDataStoreFactory(new File(this.pathTokenDirectory)))
                 .setAccessType("offline")
                 .build();
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
@@ -83,6 +72,7 @@ public class GmailHandler {
      */
     public Gmail startService () throws GeneralSecurityException, IOException {
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        Credential credentials = getCredentials(HTTP_TRANSPORT);
         Gmail newService = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
@@ -148,7 +138,7 @@ public class GmailHandler {
                 mailText = String.valueOf(field.get(messageBody));
             }
         }
-        Assert.assertNotEquals(mailText, "null","The Gmail response doesn't have the 'data' field.");
+        //Assert.assertNotEquals(mailText, null,"The Gmail response doesn't have the 'data' field.");
         // Base64 content decoding from MIME
         String decodedText = new String(Base64.decodeBase64(mailText));
         // Parse the bank code from the message
