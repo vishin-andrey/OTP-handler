@@ -9,35 +9,27 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.Base64;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
+import com.google.api.services.gmail.model.ListMessagesResponse;
 import com.google.api.services.gmail.model.Message;
 
 import java.io.*;
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.security.GeneralSecurityException;
 import java.util.*;
 
-import static java.lang.Thread.sleep;
-
 public class GmailHandler {
-    private static final String user = "me";
-    private final String BANK_EMAIL_TITLE = "Your Requested Online Banking Identification Code";
-    private final String CODE_KEY = "Code is: ";
-    private final int CODE_LENGTH = 8;
-    private final String APPLICATION_NAME = "Gmail handler";
+    private static final String GMAIL_AUTHENTICATED_USER = "me";
     private final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-    private String pathTokenDirectory;
-    private String pathCredentialsFile;
+    private final String APPLICATION_NAME = "Gmail handler";
+    private static final String PATH_TOKEN_DIRECTORY = System.getProperty("user.dir") + "/src/main/resources/credentials";
+    private static final String PATH_CREDENTIALS_FILE = PATH_TOKEN_DIRECTORY + "/gmail_credentials.json";
     private Gmail gmailService;
     private List<String> SCOPES = Arrays.asList(GmailScopes.MAIL_GOOGLE_COM);
 
-    public GmailHandler(String pathTokenDirectory, String pathCredentialsFile) throws GeneralSecurityException, IOException {
-        this.pathTokenDirectory = pathTokenDirectory;
-        this.pathCredentialsFile = pathCredentialsFile;
+    public GmailHandler() {
         this.gmailService = startService();
     }
 
@@ -51,16 +43,16 @@ public class GmailHandler {
      */
     private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
 
-        InputStream in = Files.newInputStream(new File(this.pathCredentialsFile).toPath());
+        InputStream in = Files.newInputStream(new File(this.PATH_CREDENTIALS_FILE).toPath());
         if (in == null) {
-            throw new FileNotFoundException("Resource not found: " + this.pathCredentialsFile);
+            throw new FileNotFoundException("Resource not found: " + this.PATH_CREDENTIALS_FILE);
         }
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
         // Build flow and trigger user authorization request.
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                 HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new File(this.pathTokenDirectory)))
+                .setDataStoreFactory(new FileDataStoreFactory(new File(this.PATH_TOKEN_DIRECTORY)))
                 .setAccessType("offline")
                 .build();
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
@@ -70,108 +62,61 @@ public class GmailHandler {
     /**
      * Start a new Gmail service
      */
-    public Gmail startService () throws GeneralSecurityException, IOException {
-        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        Credential credentials = getCredentials(HTTP_TRANSPORT);
-        Gmail newService = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
-                .setApplicationName(APPLICATION_NAME)
-                .build();
-        return newService;
+    public Gmail startService () {
+        final NetHttpTransport HTTP_TRANSPORT;
+        try {
+            HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+            return new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+                    .setApplicationName(APPLICATION_NAME)
+                    .build();
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
      * Return ID of the last email with a provided title
      * @param title - the message title
      * @return - last email id
-     * @throws IOException
-     * @throws GeneralSecurityException
      */
-    public String getIdOfLastMessageWithTitle(String title) throws IOException, GeneralSecurityException {
-        Gmail service = startService();
-        Gmail.Users.Messages.List request = service.users().messages().list(user)
-                .setQ("subject:" + title);
-        List<Message> listOfMessages = request.execute().getMessages();
-        return listOfMessages.get(0).getId();
+    public String getIdLastEmailByTitle(String title) {
+        List<Message> listOfMessages;
+        try {
+            ListMessagesResponse response =this.gmailService.users().messages()
+                    .list(GMAIL_AUTHENTICATED_USER)
+                    .setQ("subject:" + title)
+                    .execute();
+            listOfMessages = response.getMessages();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return (listOfMessages == null || listOfMessages.isEmpty()) ? null :  listOfMessages.get(0).getId();
     }
 
     /**
-     * Return ID of the last email with the title of the bank template
-     * @return - last bank email id
-     * @throws IOException
-     * @throws GeneralSecurityException
-     */
-    public String getLastBankMessageId() throws IOException, GeneralSecurityException {
-        return getIdOfLastMessageWithTitle(BANK_EMAIL_TITLE);
-    }
-
-    /**
-     * Return the email with the provided ID
-     * @param id - email id
+     * Return the email message for the ID provided
+     * @param messageID - email id
      * @return - an object of the Gmail class Message
-     * @throws GeneralSecurityException
-     * @throws IOException
      */
-    public Message getMessageById(String id) throws GeneralSecurityException, IOException {
-        Gmail service = startService();
-        // Get the Gmail class Message object in FULL format
-        return service.users().messages().get(user, id).setFormat("FULL").execute();
+    public Message getMessageById(String messageID) {
+        try {
+            return this.gmailService.users().messages()
+                    .get(GMAIL_AUTHENTICATED_USER, messageID)
+                    .execute();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    /**
-     * Parse and return the CODE from the email with provided ID
-     * @param id - email id
-     * @return - the code from email
-     * @throws GeneralSecurityException
-     * @throws IOException
-     * @throws IllegalAccessException
-     */
-    public String getBankCodeFromMessage(String id) throws GeneralSecurityException, IOException, IllegalAccessException {
+    public String getEmailText(String id) {
+        // Get the email snippet text
+        Message message = getMessageById(id);
+        String mailSnippet = message.getSnippet();
 
-        String mailText = null;
-        // Get the Gmail class MessagePart object and extract the MessagePartBody from it
-        Object messageBody = getMessageById(id).getPayload().get("body");
-        // Search for the "data" field in the MessagePartBody
-        for (Field field : messageBody.getClass().getDeclaredFields()) {
-            field.setAccessible(true);
-            // If the "data" field found, get the content of mail
-            if (field.getName() == "data") {
-                mailText = String.valueOf(field.get(messageBody));
-            }
-        }
-        //Assert.assertNotEquals(mailText, null,"The Gmail response doesn't have the 'data' field.");
-        // Base64 content decoding from MIME
-        String decodedText = new String(Base64.decodeBase64(mailText));
-        // Parse the bank code from the message
-        int pos = decodedText.indexOf(CODE_KEY) + CODE_KEY.length();
-        String code = decodedText.substring(pos, pos + CODE_LENGTH);
-        return code;
-    }
+        //TODO Assert.assertNotEquals(mailText, null,"The Gmail response doesn't have the 'data' field.");
 
-    /**
-     * Trying to get a new email comparing its ID with the provided one.
-     * Checking for a new message every 10 sec for 30 times.
-     * If has a new message, return the bank code from it.
-     * If there is no new message during this time period, return NULL
-     * @param previousId id of the last email before start of the transaction
-     * @return bank code or NULL if a new message not received
-     * @throws GeneralSecurityException
-     * @throws IOException
-     * @throws IllegalAccessException
-     */
-    public String getNewCode(String previousId) throws GeneralSecurityException, IOException, IllegalAccessException, InterruptedException {
-        String code = null;
-        String currentId = getLastBankMessageId();
-        int i = 0, limit = 30;
-        // Get the last bank email ID and compare if it's changed
-        while (currentId.equals(previousId) && i < limit) {
-            sleep(4000);
-            currentId = getLastBankMessageId();
-            i++;
-        }
-        // Check if the loop finished because the time exceeded the limit
-        if (i != limit) {
-            code = getBankCodeFromMessage(currentId);
-        }
-        return code;
+        return mailSnippet;
     }
 }

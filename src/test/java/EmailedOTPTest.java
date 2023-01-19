@@ -1,21 +1,15 @@
-import gmail.GmailHandler;
+import gmail.EmailedOTPHandler;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 
 public class EmailedOTPTest {
 
-    static String pathTokenDirectory = System.getProperty("user.dir") + "/src/main/resources/credentials";
-    static String pathCredentialsFile = pathTokenDirectory + "/gmail_credentials.json";
+    static String title = "OTP test";
+    public static void main(String[] args) {
 
-    static String title = "QA Automation Engineer Role";
-    public static void main(String[] args) throws GeneralSecurityException, IOException {
-
-        GmailHandler gmailHandler = new GmailHandler(pathTokenDirectory, pathCredentialsFile);
-
-        String lastEmailId = gmailHandler.getIdOfLastMessageWithTitle(title);
-        System.out.println("Last email id: " + lastEmailId);
-        System.out.println("Message: " + gmailHandler.getMessageById(lastEmailId));
+        EmailedOTPHandler otpHandler = new EmailedOTPHandler(title, "Your OTP is: ", 6);
+        String result = otpHandler.getOTPEmailSent();
+        if ((result == null)) System.out.println("OTP email wasn't received");
+        else System.out.println("OTP: " + result);
     }
 
 }
