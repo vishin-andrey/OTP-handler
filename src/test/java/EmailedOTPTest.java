@@ -9,8 +9,8 @@ public class EmailedOTPTest {
         // -> Here trigger the OTP email sending
         String otp = otpHandler.getOTPEmailSent();
 
-        if ((otp == null)) System.out.println("OTP email wasn't received");
-        else System.out.println("OTP: " + otp);
+        assert otp != null : "No new email with title = '" + title + "' was received during the time period";
+        System.out.println("OTP: " + otp);
     }
 
 }

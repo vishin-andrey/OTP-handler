@@ -23,7 +23,9 @@ public class EmailedOTPHandler {
     private String getOTP() {
         String mailText = gmail.getEmailSnippet(emailID);
         // Parse OTP
-        int pos = mailText.indexOf(otpKeyPhrase) + otpKeyPhrase.length();
+        int pos = mailText.indexOf(otpKeyPhrase);   // Find the OTP key phrase
+        assert pos != -1 : "OTP key phrase not found in the email";
+        pos = pos + otpKeyPhrase.length();         // Move to the OTP start position
         return mailText.substring(pos, pos + otpLength);
     }
 
