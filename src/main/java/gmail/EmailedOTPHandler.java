@@ -3,43 +3,46 @@ package gmail;
 import static java.lang.Thread.sleep;
 
 public class EmailedOTPHandler {
-    private String emailTitle;
-    private String otpKeyPhrase;
-    private int otpLength;
+    private final String emailTitle;
+    private final String otpKeyPhrase;
+    private final int otpLength;
+    private final GmailHandler gmail;
     private String emailID;
-    private GmailHandler gmail;
 
     public EmailedOTPHandler(String emailTitle, String otpKeyPhrase, int otpLength) {
         this.emailTitle = emailTitle;
         this.otpKeyPhrase = otpKeyPhrase;
         this.otpLength = otpLength;
-        this.gmail = new GmailHandler();
-        this.refreshID();
+        gmail = new GmailHandler();
+        refreshID();
     }
 
     /**
-     * Parse and return OTP from the email with emailLastID
+     * Parse and return OTP from the email with id = this.emailID
      */
     private String getOTP() {
-        String mailText = this.gmail.getEmailText(this.emailID);
-        // Base64 content decoding from MIME
-        String decodedText = mailText;
-        // Parse the bank code from the message
-        int pos = decodedText.indexOf(this.otpKeyPhrase) + this.otpKeyPhrase.length();
-        String code = decodedText.substring(pos, pos + otpLength);
-        return code;
-    }
-
-    private void refreshID() {
-        this.emailID = getID();
-    }
-
-    private String getID() {
-        return this.gmail.getIdLastEmailByTitle(this.emailTitle);
+        String mailText = gmail.getEmailSnippet(emailID);
+        // Parse OTP
+        int pos = mailText.indexOf(otpKeyPhrase) + otpKeyPhrase.length();
+        return mailText.substring(pos, pos + otpLength);
     }
 
     /**
-     * Trying to get a new email comparing its ID with the provided one.
+     * Update this.emailID to the last email with a title = this.emailTitle
+     */
+    private void refreshID() {
+        emailID = getID();
+    }
+
+    /**
+     * Return ID of the last email with a title = this.emailTitle
+     */
+    private String getID() {
+        return gmail.getEmailIDByTitle(this.emailTitle);
+    }
+
+    /**
+     * Trying to get a new email comparing its ID with this.emailID.
      * Checking for a new message every 5 sec for 6 times.
      * If gotten a new message, return the OTP from it.
      * If there is no new message during the time period, return NULL
@@ -50,7 +53,7 @@ public class EmailedOTPHandler {
         // Get the last email ID and compare if it's changed
         while (i < limit) {
             id = getID();
-            if (id != null && !id.equals(this.emailID)) {
+            if (id != null && !id.equals(emailID)) {
                 this.refreshID();
                 return getOTP();
             }

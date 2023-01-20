@@ -23,14 +23,14 @@ import java.util.*;
 public class GmailHandler {
     private static final String GMAIL_AUTHENTICATED_USER = "me";
     private final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-    private final String APPLICATION_NAME = "Gmail handler";
+    private static final String APPLICATION_NAME = "Gmail handler";
     private static final String PATH_TOKEN_DIRECTORY = System.getProperty("user.dir") + "/src/main/resources/credentials";
     private static final String PATH_CREDENTIALS_FILE = PATH_TOKEN_DIRECTORY + "/gmail_credentials.json";
-    private Gmail gmailService;
-    private List<String> SCOPES = Arrays.asList(GmailScopes.MAIL_GOOGLE_COM);
+    private final Gmail gmailService;
+    private final List<String> SCOPES = Arrays.asList(GmailScopes.MAIL_GOOGLE_COM);
 
     public GmailHandler() {
-        this.gmailService = startService();
+        gmailService = startService();
     }
 
     /**
@@ -43,16 +43,16 @@ public class GmailHandler {
      */
     private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
 
-        InputStream in = Files.newInputStream(new File(this.PATH_CREDENTIALS_FILE).toPath());
+        InputStream in = Files.newInputStream(new File(PATH_CREDENTIALS_FILE).toPath());
         if (in == null) {
-            throw new FileNotFoundException("Resource not found: " + this.PATH_CREDENTIALS_FILE);
+            throw new FileNotFoundException("Resource not found: " + PATH_CREDENTIALS_FILE);
         }
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
         // Build flow and trigger user authorization request.
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                 HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new File(this.PATH_TOKEN_DIRECTORY)))
+                .setDataStoreFactory(new FileDataStoreFactory(new File(PATH_TOKEN_DIRECTORY)))
                 .setAccessType("offline")
                 .build();
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
@@ -69,9 +69,7 @@ public class GmailHandler {
             return new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                     .setApplicationName(APPLICATION_NAME)
                     .build();
-        } catch (GeneralSecurityException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
+        } catch (IOException | GeneralSecurityException e) {
             throw new RuntimeException(e);
         }
     }
@@ -81,7 +79,7 @@ public class GmailHandler {
      * @param title - the message title
      * @return - last email id
      */
-    public String getIdLastEmailByTitle(String title) {
+    public String getEmailIDByTitle(String title) {
         List<Message> listOfMessages;
         try {
             ListMessagesResponse response =this.gmailService.users().messages()
@@ -96,27 +94,19 @@ public class GmailHandler {
     }
 
     /**
-     * Return the email message for the ID provided
-     * @param messageID - email id
-     * @return - an object of the Gmail class Message
+     * Return the email snippet text
+     * @param emailID - the email ID to get the snippet from
+     * @return - email snippet text as a String
      */
-    public Message getMessageById(String messageID) {
+    public String getEmailSnippet(String emailID) {
+        Message message;
         try {
-            return this.gmailService.users().messages()
-                    .get(GMAIL_AUTHENTICATED_USER, messageID)
+            message = this.gmailService.users().messages()
+                    .get(GMAIL_AUTHENTICATED_USER, emailID)
                     .execute();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public String getEmailText(String id) {
-        // Get the email snippet text
-        Message message = getMessageById(id);
-        String mailSnippet = message.getSnippet();
-
-        //TODO Assert.assertNotEquals(mailText, null,"The Gmail response doesn't have the 'data' field.");
-
-        return mailSnippet;
+        return message.getSnippet();
     }
 }
