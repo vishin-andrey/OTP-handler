@@ -107,6 +107,6 @@ public class GmailHandler {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return message.getSnippet();
+        return message.getSnippet(); // Use getPayload() instead if you want to get the full email body
     }
 }
