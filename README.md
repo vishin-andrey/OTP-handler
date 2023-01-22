@@ -1,1 +1,1 @@
-# gmail-handler
+# Java class to handle OTP sent via email in E2E UI tests.
