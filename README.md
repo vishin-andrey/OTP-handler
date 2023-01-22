@@ -26,7 +26,6 @@ Steps 1-2 and 4-6 are realized in the code provided.
 To process emails with OTP, use the `EmailedOTPHandler` class.
 An EmailedOTPHandler instance should be created for a specific combination of an email Subject, a passphrase followed by an OTP in the email body, and an OTP length.
 
-{% details *Class variables list* %}
 
 ```java
     private final String emailTitle; // Subject pattern of the emails containing the OTP
@@ -36,14 +35,10 @@ An EmailedOTPHandler instance should be created for a specific combination of an
     private String emailID; // ID of the last email with the provided title
 ```
 
-{% enddetails %}
-
 Class constructor:
 - Starts the Gmail service using the `GmailHanler` class.
 - Savesthe mentioned email parameters.
 - Sets the pointer to the last received email that matches the parameters.
-
-{% details *Constructor code* %}
 
 ```java
     public EmailedOTPHandler(String emailTitle, String otpKeyPhrase, int otpLength) {
@@ -56,13 +51,11 @@ Class constructor:
 
 ```
 
-{% enddetails %}
-
 After creating an `EmailedOTPHandler` instance, you can trigger OTP generation and delivery by either mimic user login behavior through your application's UI or by querying the BE endpoint.
 To get the OTP from an email, use the `getOTPEmailSent()` method. The method waits for a new email with Subject set and then tries to parse the OTP from it.
 If there is no new message within the time period, NULL is returned.
 
-The complete class code is shown below.
+The complete class code is shown [below](#emailedotphandler).
 
 # GmailHandler class
 `GmailHandler` is an utility class to handle a Gmail service through API. The class was built using methods described in the [Google Gmail Java quick start guide](https://developers.google.com/gmail/api/quickstart).
@@ -72,18 +65,14 @@ The class is used:
 - to get email message by email ID
   Also on the first call to the Gmail API, it creates a credential file in the project to authenticate all future access to the Gmail service (see detailed description [below](#add-json-client-id-file)).
 
-The complete class code is shown below.
+The complete class code is shown [below](#gmailhandler).
 
 
 # Notice
 
 * To enable Java `assert` validation,  use the JVM parameter `-ea`
 
-{% details IntelliJ IDEA %}
-
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/zh7gvcftxk9z95k33neh.png)
-
-{% enddetails %}
 
 * Before using the class, you must enable and configure the API for your Gmail account, as shown [below](#how-to-set-up-the-gmail-account-api).
 
@@ -94,7 +83,6 @@ Before moving on, you must activate and configure the API for the Gmail account 
 
 #### Register a new project
 
-{% details Step by step %}
 
 * Click on CREATE PROJECT.
 
@@ -104,11 +92,9 @@ Before moving on, you must activate and configure the API for the Gmail account 
 
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/7rjx5d9e8ky7sny9feed.png)
 
-{% enddetails %}
 
 #### Enable API
 
-{% details Step by step %}
 
 * Click on ENABLE APIS AND SERVICES.
 
@@ -122,11 +108,8 @@ Before moving on, you must activate and configure the API for the Gmail account 
 
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/xlt9lfph4dx8efjkzpqr.png)
 
-{% enddetails %}
 
 #### Create credentials for autotests to access your Gmail account
-
-{% details Step by step %}
 
 * Click on CREATE CREDENTIALS.
 
@@ -161,11 +144,7 @@ Before moving on, you must activate and configure the API for the Gmail account 
 
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/s6na8ivc3rarcr0x9vex.png)
 
-{% enddetails %}
-
 #### Register a trusted test user
-
-{% details Step by step %}
 
 * Navigate to the OAuth consent screen tab and click on `ADD USERS`
 
@@ -175,24 +154,17 @@ Before moving on, you must activate and configure the API for the Gmail account 
 
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/4onacy77d16gea850vns.png)
 
-{% enddetails %}
-
 # How to add the Gmail account credentials to the project
 After receiving the Client ID file in JSON format (as shown above), you must exchange it for the `StoredCredential` file the first time you call the Gmail API.
 
 #### Add JSON Client ID file
 
-{% details Step by step %}
-
 * Put the file into `src/main/resources/credentials`.
 
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/t47rol8ailyqaqbpozg9.png)
 
-{% enddetails %}
-
 #### Verify the autotest access to the account on Gmail
 
-{% details Step by step %}
 Run your project first time. At the first call to the Gmail API, a browser will be opened by Google. Your should follow the Google dialog.
 
 * Choose the account you add on the [Register a trusted test user](#register-a-trusted-test-user) step.
@@ -213,16 +185,11 @@ Run your project first time. At the first call to the Gmail API, a browser will 
 
 * Stop the first test project execution.
 
-{% enddetails %}
-
 #### Check for the StoredCredential file
 
-{% details Step by step %}
 
 * The `StoredCredential` file should already be created automatically in `src/main/resources/credentials` during your first Gmail API call; if it is not, repeat [this section](#how-to-add-the-gmail-account-credentials-to-the-project) again.
 
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ae2bbrwrzbvvqcf80mdk.png)
 
 If you change the Gmail API configuration in the console in the future, you should delete the `StoredCredential` file and repeat these steps to add a new one.
-
-{% enddetails %}
