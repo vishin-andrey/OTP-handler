@@ -55,8 +55,6 @@ After creating an `EmailedOTPHandler` instance, you can trigger OTP generation a
 To get the OTP from an email, use the `getOTPEmailSent()` method. The method waits for a new email with Subject set and then tries to parse the OTP from it.
 If there is no new message within the time period, NULL is returned.
 
-The complete class code is shown [below](#emailedotphandler).
-
 # GmailHandler class
 `GmailHandler` is an utility class to handle a Gmail service through API. The class was built using methods described in the [Google Gmail Java quick start guide](https://developers.google.com/gmail/api/quickstart).
 The class is used:
@@ -64,9 +62,6 @@ The class is used:
 - to get email ID by Subject
 - to get email message by email ID
   Also on the first call to the Gmail API, it creates a credential file in the project to authenticate all future access to the Gmail service (see detailed description [below](#add-json-client-id-file)).
-
-The complete class code is shown [below](#gmailhandler).
-
 
 # Notice
 
