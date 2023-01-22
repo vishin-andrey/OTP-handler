@@ -75,6 +75,8 @@ The class is used:
 
 # How to set up the Gmail account API
 Before moving on, you must activate and configure the API for the Gmail account you will be using to receive OTP emails. Using the [Google Cloud Console](https://console.cloud.google.com/) follow the steps below.
+<details>
+  <summary>How to set up the Gmail account API - details (Click to expand)</summary>
 
 #### Register a new project
 
@@ -148,10 +150,13 @@ Before moving on, you must activate and configure the API for the Gmail account 
 * Add your any real Gmail account email address. You will need to act under this account later to verify access for the Client ID
 
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/4onacy77d16gea850vns.png)
+</details>
 
 # How to add the Gmail account credentials to the project
 After receiving the Client ID file in JSON format (as shown above), you must exchange it for the `StoredCredential` file the first time you call the Gmail API.
 
+<details>
+  <summary>How to add the Gmail account credentials to the project - details (Click to expand)</summary>
 #### Add JSON Client ID file
 
 * Put the file into `src/main/resources/credentials`.
@@ -188,3 +193,5 @@ Run your project first time. At the first call to the Gmail API, a browser will 
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ae2bbrwrzbvvqcf80mdk.png)
 
 If you change the Gmail API configuration in the console in the future, you should delete the `StoredCredential` file and repeat these steps to add a new one.
+
+</details>
