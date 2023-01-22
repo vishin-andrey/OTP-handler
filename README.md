@@ -66,8 +66,10 @@ The class is used:
 # Notice
 
 * To enable Java `assert` validation,  use the JVM parameter `-ea`
-
+<details>
+  <summary>IntelliJ IDEA (Click to expand)</summary>
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/zh7gvcftxk9z95k33neh.png)
+</details>
 
 * Before using the class, you must enable and configure the API for your Gmail account, as shown [below](#how-to-set-up-the-gmail-account-api).
 
