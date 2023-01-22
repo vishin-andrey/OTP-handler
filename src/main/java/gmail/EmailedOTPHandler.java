@@ -3,11 +3,11 @@ package gmail;
 import static java.lang.Thread.sleep;
 
 public class EmailedOTPHandler {
-    private final String emailTitle;
-    private final String otpKeyPhrase;
-    private final int otpLength;
-    private final GmailHandler gmail;
-    private String emailID;
+    private final String emailTitle; // Subject pattern of the emails containing the OTP
+    private final String otpKeyPhrase; // Phrase that precedes the OTP in the email body
+    private final int otpLength; // Length of the OTP
+    private final GmailHandler gmail; // Gmail service
+    private String emailID; // ID of the last email with the provided title
 
     public EmailedOTPHandler(String emailTitle, String otpKeyPhrase, int otpLength) {
         this.emailTitle = emailTitle;
@@ -56,7 +56,7 @@ public class EmailedOTPHandler {
         while (i < limit) {
             id = getID();
             if (id != null && !id.equals(emailID)) {
-                this.refreshID();
+                refreshID();
                 return getOTP();
             }
             i++;
