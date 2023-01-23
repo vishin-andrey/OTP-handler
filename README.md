@@ -1,16 +1,16 @@
 # Java class to handle OTP sent via email in E2E UI tests.
 
-# Background
+## Background
 When implementing end-to-end automated testing of an application with one-time password  (OTP) authentication, we need to establish a way to test the entire flow of OTP delivery to the user.
 Here I provide two classes that are ready to be used in this kind of test to receive OTP via email sent by the backend and a step-by-step guide on integrating into your framework.
 
-# Constraints
+## Constraints
 To implement this approach, the following conditions must be met:
 * The QA team manages a dedicated Gmail account.
 * Emails delivering OTP have a known constant Subject text
 * A known constant phrase precedes OTP in the body of the email
 
-# Algorithm
+## Algorithm
 Along execution, an autotest:
 1. Creates and keeps an instance of the Gmail service based on the configuration settings (Gmail API credentials and the application name)
 2. Gets and keeps an ID of the last received email with a subject that is set for OTP emails (or retains null if no one was received before)
@@ -22,7 +22,7 @@ Along execution, an autotest:
 
 Steps 1-2 and 4-6 are realized in the code provided.
 
-# EmailedOTPHandler class
+## EmailedOTPHandler class
 To process emails with OTP, use the `EmailedOTPHandler` class.
 An EmailedOTPHandler instance should be created for a specific combination of an email Subject, a passphrase followed by an OTP in the email body, and an OTP length.
 
@@ -55,7 +55,7 @@ After creating an `EmailedOTPHandler` instance, you can trigger OTP generation a
 To get the OTP from an email, use the `getOTPEmailSent()` method. The method waits for a new email with Subject set and then tries to parse the OTP from it.
 If there is no new message within the time period, NULL is returned.
 
-# GmailHandler class
+## GmailHandler class
 `GmailHandler` is an utility class to handle a Gmail service through API. The class was built using methods described in the [Google Gmail Java quick start guide](https://developers.google.com/gmail/api/quickstart).
 The class is used:
 - to run Gmail service
@@ -63,7 +63,7 @@ The class is used:
 - to get email message by email ID
   Also on the first call to the Gmail API, it creates a credential file in the project to authenticate all future access to the Gmail service (see detailed description [below](#add-json-client-id-file)).
 
-# Notice
+## Notice
 
 * To enable Java `assert` validation,  use the JVM parameter `-ea`
 <details>
@@ -75,7 +75,7 @@ The class is used:
 
 * `GmailHandler` extracts OTP from the email snippet. If your OTP in the email body is too far from the beginning and therefore not included in the snippet, use `getPayload()` instead of `getSnippet()`.
 
-# How to set up the Gmail account API
+## How to set up the Gmail account API
 Before moving on, you must activate and configure the API for the Gmail account you will be using to receive OTP emails. Using the [Google Cloud Console](https://console.cloud.google.com/) follow the steps below.
 <details>
   <summary>How to set up the Gmail account API - details (Click to expand)</summary>
@@ -154,7 +154,7 @@ Before moving on, you must activate and configure the API for the Gmail account 
 ![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/4onacy77d16gea850vns.png)
 </details>
 
-# How to add the Gmail account credentials to the project
+## How to add the Gmail account credentials to the project
 After receiving the Client ID file in JSON format (as shown above), you must exchange it for the `StoredCredential` file the first time you call the Gmail API.
 
 <details>
