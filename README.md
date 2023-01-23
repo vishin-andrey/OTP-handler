@@ -26,30 +26,10 @@ Steps 1-2 and 4-6 are realized in the code provided.
 To process emails with OTP, use the `EmailedOTPHandler` class.
 An EmailedOTPHandler instance should be created for a specific combination of an email Subject, a passphrase followed by an OTP in the email body, and an OTP length.
 
-
-```java
-    private final String emailTitle; // Subject pattern of the emails containing the OTP
-    private final String otpKeyPhrase; // Phrase that precedes the OTP in the email body
-    private final int otpLength; // Length of the OTP
-    private final GmailHandler gmail; // Gmail service
-    private String emailID; // ID of the last email with the provided title
-```
-
 Class constructor:
 - Starts the Gmail service using the `GmailHanler` class.
 - Savesthe mentioned email parameters.
 - Sets the pointer to the last received email that matches the parameters.
-
-```java
-    public EmailedOTPHandler(String emailTitle, String otpKeyPhrase, int otpLength) {
-        this.emailTitle = emailTitle;
-        this.otpKeyPhrase = otpKeyPhrase;
-        this.otpLength = otpLength;
-        gmail = new GmailHandler();
-        refreshID();
-    }
-
-```
 
 After creating an `EmailedOTPHandler` instance, you can trigger OTP generation and delivery by either mimic user login behavior through your application's UI or by querying the BE endpoint.
 To get the OTP from an email, use the `getOTPEmailSent()` method. The method waits for a new email with Subject set and then tries to parse the OTP from it.
