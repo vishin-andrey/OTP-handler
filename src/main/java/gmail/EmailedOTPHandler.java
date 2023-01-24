@@ -38,8 +38,7 @@ public class EmailedOTPHandler {
     }
 
     /**
-     * Trying to get a new email comparing its ID with this.emailID.
-     * Checking for a new message every 5 sec for 6 times.
+     * Trying to get a new email, checking for a new message every 5 sec for 6 times.
      * If gotten a new message, return the OTP from it.
      * If there is no new message during the time period, return NULL
      */
