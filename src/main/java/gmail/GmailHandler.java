@@ -20,17 +20,37 @@ import java.nio.file.Files;
 import java.security.GeneralSecurityException;
 import java.util.*;
 
-public class GmailHandler {
+public class GmailHandler implements EmailProviderHandler{
     private static final String GMAIL_AUTHENTICATED_USER = "me";
     private final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final String APPLICATION_NAME = "Gmail handler";
     private static final String PATH_TOKEN_DIRECTORY = System.getProperty("user.dir") + "/src/main/resources/credentials";
     private static final String PATH_CREDENTIALS_FILE = PATH_TOKEN_DIRECTORY + "/gmail_credentials.json";
-    private final Gmail gmailService;
+    private Gmail gmailService;
     private final List<String> SCOPES = Arrays.asList(GmailScopes.MAIL_GOOGLE_COM);
+    private String emailSubject;
+    private String emailID; // ID of the last email with the provided Subject
 
-    public GmailHandler() {
-        gmailService = startService();
+
+    public void init(String emailSubject) {
+        this.emailSubject = emailSubject;
+        startService();
+        emailID = getEmailID();
+    }
+
+    /**
+     * Start a new Gmail service
+     */
+    public void startService () {
+        final NetHttpTransport HTTP_TRANSPORT;
+        try {
+            HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+            gmailService =  new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+                    .setApplicationName(APPLICATION_NAME)
+                    .build();
+        } catch (IOException | GeneralSecurityException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -60,31 +80,15 @@ public class GmailHandler {
     }
 
     /**
-     * Start a new Gmail service
-     */
-    public Gmail startService () {
-        final NetHttpTransport HTTP_TRANSPORT;
-        try {
-            HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-            return new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
-                    .setApplicationName(APPLICATION_NAME)
-                    .build();
-        } catch (IOException | GeneralSecurityException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Return ID of the last email with a provided title
-     * @param title - the message title
+     * Return ID of the last email with subject = emailSubject
      * @return - last email id
      */
-    public String getEmailIDByTitle(String title) {
+    public String getEmailID() {
         List<Message> listOfMessages;
         try {
-            ListMessagesResponse response =this.gmailService.users().messages()
+            ListMessagesResponse response = gmailService.users().messages()
                     .list(GMAIL_AUTHENTICATED_USER)
-                    .setQ("subject:" + title)
+                    .setQ("subject:" + emailSubject)
                     .execute();
             listOfMessages = response.getMessages();
         } catch (IOException e) {
@@ -95,18 +99,33 @@ public class GmailHandler {
 
     /**
      * Return the email snippet text
-     * @param emailID - the email ID to get the snippet from
      * @return - email snippet text as a String
      */
-    public String getEmailSnippet(String emailID) {
+    public String getMessage() {
         Message message;
         try {
-            message = this.gmailService.users().messages()
+            message = gmailService.users().messages()
                     .get(GMAIL_AUTHENTICATED_USER, emailID)
                     .execute();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return message.getSnippet(); // Use getPayload() instead if you want to get the full email body
+    }
+
+    /**
+     * Check if there is a new email with subject = emailSubject
+     * @return
+     */
+    public boolean isEmailReceived() {
+        String newEmailID = getEmailID();
+        if (newEmailID == null) {
+            return false;
+        }
+        if (newEmailID.equals(emailID)) {
+            return false;
+        }
+        emailID = newEmailID;
+        return true;
     }
 }

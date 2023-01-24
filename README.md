@@ -6,42 +6,52 @@ Here I provide two classes that are ready to be used in this kind of test to rec
 
 ## Constraints
 To implement this approach, the following conditions must be met:
-* The QA team manages a dedicated Gmail account.
+* The QA team manages a dedicated email account.
 * Emails delivering OTP have a known constant Subject text
 * A known constant phrase precedes OTP in the body of the email
+* The OTP length is fixed
 
 ## Algorithm
 Along execution, an autotest:
-1. Creates and keeps an instance of the Gmail service based on the configuration settings (Gmail API credentials and the application name)
-2. Gets and keeps an ID of the last received email with a subject that is set for OTP emails (or retains null if no one was received before)
+1. Creates and keeps an instance of the Email Provider service based on the configuration settings (Email Provider API credentials)
+2. Gets and keeps a pointer to the last received email with a subject that is set for OTP emails (or retains null if no one was received before)
 3. Triggers the OTP generation and delivery
-4. Waits for email delivery on Gmail
+4. Waits for email delivery to the Email Provider
 5. Gets the email message
 6. Parses OTP from the message
 7. Uses OTP to verify login to the application under test
 
-Steps 1-2 and 4-6 are realized in the code provided.
+Steps 1-2 and 4-6 are implemented in the code provided.
+
+## EmailProviderHandler interface
+To make the approach flexible, the `EmailProviderHandler` interface has been declared. The implementation must provide the following:
+- a service initiation to expect emails with specified subject
+- checking if a new email with the subject has already been received
+- getting the message from the received email
+
+I have implemented the interface for Gmail (below), but you can implement it for another provider you use.
 
 ## EmailedOTPHandler class
 To process emails with OTP, use the `EmailedOTPHandler` class.
-An EmailedOTPHandler instance should be created for a specific combination of an email Subject, a passphrase followed by an OTP in the email body, and an OTP length.
+An EmailedOTPHandler instance should be created for a specific combination of an 
+email Subject, a passphrase followed by an OTP in the email body, and an OTP length. 
+To give the handler a tool to access emails on a particular Email Provider, 
+we should inject an instance of the implemented `EmailProviderHandler`.
 
-Class constructor:
-- Starts the Gmail service using the `GmailHanler` class.
-- Savesthe mentioned email parameters.
-- Sets the pointer to the last received email that matches the parameters.
-
-After creating an `EmailedOTPHandler` instance, you can trigger OTP generation and delivery by either mimic user login behavior through your application's UI or by querying the BE endpoint.
+Before using an `EmailedOTPHandler` instance for getting OTP, you need to initiate it using the `init()` method.
+Then you can trigger OTP generation and delivery by either mimic user login behavior through your application's UI or by querying the BE endpoint.
 To get the OTP from an email, use the `getOTPEmailSent()` method. The method waits for a new email with Subject set and then tries to parse the OTP from it.
 If there is no new message within the time period, NULL is returned.
 
+The complete class code is shown [below](#emailedotphandler).
+
 ## GmailHandler class
-`GmailHandler` is an utility class to handle a Gmail service through API. The class was built using methods described in the [Google Gmail Java quick start guide](https://developers.google.com/gmail/api/quickstart).
-The class is used:
-- to run Gmail service
-- to get email ID by Subject
-- to get email message by email ID
-  Also on the first call to the Gmail API, it creates a credential file in the project to authenticate all future access to the Gmail service (see detailed description [below](#add-json-client-id-file)).
+`GmailHandler` implements `EmailProviderHandler` to handle a Gmail service through API.
+To start the Gmail service and get credentials are used using methods described in the [Google Gmail Java quick start guide](https://developers.google.com/gmail/api/quickstart).
+
+On the first call to the Gmail API, `GmailHandler` creates a credential file in the project to authenticate all future access to the Gmail service (see detailed description [below](#add-json-client-id-file)).
+
+The complete class code is shown [below](#gmailhandler).
 
 ## Notice
 

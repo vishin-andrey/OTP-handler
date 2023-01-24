@@ -2,26 +2,34 @@ package gmail;
 
 import static java.lang.Thread.sleep;
 
+interface EmailProviderHandler {
+    void init(String emailSubject);
+    boolean isEmailReceived();
+    String getMessage();
+}
+
 public class EmailedOTPHandler {
-    private final String emailTitle; // Subject pattern of the emails containing the OTP
+    private final String emailSubject; // Subject pattern of the emails containing the OTP
     private final String otpKeyPhrase; // Phrase that precedes the OTP in the email body
     private final int otpLength; // Length of the OTP
-    private final GmailHandler gmail; // Gmail service
-    private String emailID; // ID of the last email with the provided title
+    private final EmailProviderHandler emailProvider; // Gmail service
 
-    public EmailedOTPHandler(String emailTitle, String otpKeyPhrase, int otpLength) {
-        this.emailTitle = emailTitle;
+    public EmailedOTPHandler(String emailSubject, String otpKeyPhrase, int otpLength, EmailProviderHandler emailProvider) {
+        this.emailSubject = emailSubject;
         this.otpKeyPhrase = otpKeyPhrase;
         this.otpLength = otpLength;
-        gmail = new GmailHandler();
-        refreshID();
+        this.emailProvider = emailProvider;
+    }
+
+    public void init() {
+        emailProvider.init(emailSubject);
     }
 
     /**
      * Parse and return OTP from the email with id = this.emailID
      */
-    private String getOTP() {
-        String mailText = gmail.getEmailSnippet(emailID);
+    private String parseOTP() {
+        String mailText = emailProvider.getMessage();
         // Parse OTP
         int pos = mailText.indexOf(otpKeyPhrase);   // Find the OTP key phrase
         assert pos != -1 : "OTP key phrase not found in the email";
@@ -30,42 +38,23 @@ public class EmailedOTPHandler {
     }
 
     /**
-     * Update this.emailID to the last email with a title = this.emailTitle
-     */
-    private void refreshID() {
-        emailID = getID();
-    }
-
-    /**
-     * Return ID of the last email with a title = this.emailTitle
-     */
-    private String getID() {
-        return gmail.getEmailIDByTitle(this.emailTitle);
-    }
-
-    /**
-     * Trying to get a new email comparing its ID with this.emailID.
-     * Checking for a new message every 5 sec for 6 times.
+     * Trying to get a new email, checking for a new message every 5 sec for 6 times.
      * If gotten a new message, return the OTP from it.
      * If there is no new message during the time period, return NULL
      */
-    public String getOTPEmailSent() {
-        String id;
-        int i = 0, limit = 6;
-        // Get the last email ID and compare if it's changed
-        while (i < limit) {
-            id = getID();
-            if (id != null && !id.equals(emailID)) {
-                refreshID();
-                return getOTP();
+    public String getOTP() {
+        String otp = null;
+        for (int attempt = 0; attempt < 6; attempt++) {
+            if (emailProvider.isEmailReceived()) {
+                otp = parseOTP();
+                break;
             }
-            i++;
             try {
                 sleep(5000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        return null;
+        return otp;
     }
 }
