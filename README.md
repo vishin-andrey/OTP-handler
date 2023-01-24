@@ -43,15 +43,11 @@ Then you can trigger OTP generation and delivery by either mimic user login beha
 To get the OTP from an email, use the `getOTPEmailSent()` method. The method waits for a new email with Subject set and then tries to parse the OTP from it.
 If there is no new message within the time period, NULL is returned.
 
-The complete class code is shown [below](#emailedotphandler).
-
 ## GmailHandler class
 `GmailHandler` implements `EmailProviderHandler` to handle a Gmail service through API.
-To start the Gmail service and get credentials are used using methods described in the [Google Gmail Java quick start guide](https://developers.google.com/gmail/api/quickstart).
+To start the Gmail service and get credentials are used methods described in the [Google Gmail Java quick start guide](https://developers.google.com/gmail/api/quickstart).
 
 On the first call to the Gmail API, `GmailHandler` creates a credential file in the project to authenticate all future access to the Gmail service (see detailed description [below](#add-json-client-id-file)).
-
-The complete class code is shown [below](#gmailhandler).
 
 ## Notice
 
