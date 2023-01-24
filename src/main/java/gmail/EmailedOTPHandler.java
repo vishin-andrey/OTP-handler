@@ -3,28 +3,26 @@ package gmail;
 import static java.lang.Thread.sleep;
 
 interface EmailProviderHandler {
-    void startService();
-    void initPointer(String title);
+    void init(String emailSubject);
     boolean isEmailReceived();
     String getMessage();
 }
 
 public class EmailedOTPHandler {
-    private final String emailTitle; // Subject pattern of the emails containing the OTP
+    private final String emailSubject; // Subject pattern of the emails containing the OTP
     private final String otpKeyPhrase; // Phrase that precedes the OTP in the email body
     private final int otpLength; // Length of the OTP
     private final EmailProviderHandler emailProvider; // Gmail service
 
-    public EmailedOTPHandler(String emailTitle, String otpKeyPhrase, int otpLength, EmailProviderHandler emailProvider) {
-        this.emailTitle = emailTitle;
+    public EmailedOTPHandler(String emailSubject, String otpKeyPhrase, int otpLength, EmailProviderHandler emailProvider) {
+        this.emailSubject = emailSubject;
         this.otpKeyPhrase = otpKeyPhrase;
         this.otpLength = otpLength;
         this.emailProvider = emailProvider;
     }
 
     public void init() {
-        emailProvider.startService();
-        emailProvider.initPointer(emailTitle);
+        emailProvider.init(emailSubject);
     }
 
     /**
@@ -47,7 +45,7 @@ public class EmailedOTPHandler {
      */
     public String getOTP() {
         String otp = null;
-        for (int i = 0; i < 6; i++) {
+        for (int attempt = 0; attempt < 6; attempt++) {
             if (emailProvider.isEmailReceived()) {
                 otp = parseOTP();
                 break;

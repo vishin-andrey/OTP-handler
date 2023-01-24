@@ -31,6 +31,13 @@ public class GmailHandler implements EmailProviderHandler{
     private String emailSubject;
     private String emailID; // ID of the last email with the provided Subject
 
+
+    public void init(String emailSubject) {
+        this.emailSubject = emailSubject;
+        startService();
+        emailID = getEmailID();
+    }
+
     /**
      * Start a new Gmail service
      */
@@ -73,25 +80,15 @@ public class GmailHandler implements EmailProviderHandler{
     }
 
     /**
-     * Save the ID of the last email with the provided Subject
-     * @param title - the Email Subject
-     */
-    public void initPointer(String title) {
-        emailSubject = title;
-        emailID = getEmailIDByTitle(title);
-    }
-
-    /**
-     * Return ID of the last email with a provided title
-     * @param title - the message title
+     * Return ID of the last email with subject = emailSubject
      * @return - last email id
      */
-    public String getEmailIDByTitle(String title) {
+    public String getEmailID() {
         List<Message> listOfMessages;
         try {
             ListMessagesResponse response = gmailService.users().messages()
                     .list(GMAIL_AUTHENTICATED_USER)
-                    .setQ("subject:" + title)
+                    .setQ("subject:" + emailSubject)
                     .execute();
             listOfMessages = response.getMessages();
         } catch (IOException e) {
@@ -117,11 +114,11 @@ public class GmailHandler implements EmailProviderHandler{
     }
 
     /**
-     * Check if there is a new email with the provided Subject
+     * Check if there is a new email with subject = emailSubject
      * @return
      */
     public boolean isEmailReceived() {
-        String newEmailID = getEmailIDByTitle(emailSubject);
+        String newEmailID = getEmailID();
         if (newEmailID == null) {
             return false;
         }
