@@ -1,5 +1,7 @@
 # Java class to handle OTP sent via email in E2E UI tests.
 
+Published on [dev.to](https://dev.to/andreyvishin/using-otp-sent-via-email-in-e2e-ui-tests-4f5n)
+
 ## Background
 When implementing end-to-end automated testing of an application with one-time password  (OTP) authentication, we need to establish a way to test the entire flow of OTP delivery to the user.
 Here I provide two classes that are ready to be used in this kind of test to receive OTP via email sent by the backend and a step-by-step guide on integrating into your framework.
@@ -145,6 +147,7 @@ After receiving the Client ID file in JSON format (as shown above), you must exc
 
 <details>
   <summary>How to add the Gmail account credentials to the project - details (Click to expand)</summary>
+
 #### Add JSON Client ID file
 
 * Put the file into `src/main/resources/credentials`.
